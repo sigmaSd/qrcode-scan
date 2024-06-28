@@ -32,6 +32,28 @@ function stopScanner() {
   restartButton.style.display = "block";
 }
 
+function isValidURL(string) {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function displayResult(text) {
+  if (isValidURL(text)) {
+    const link = document.createElement("a");
+    link.href = text;
+    link.textContent = text;
+    link.target = "_blank"; // Open link in a new tab
+    resultElement.innerHTML = "QR Code detected (click to open): ";
+    resultElement.appendChild(link);
+  } else {
+    resultElement.textContent = `QR Code detected: ${text}`;
+  }
+}
+
 function tick() {
   if (video.readyState === video.HAVE_ENOUGH_DATA) {
     const canvas = document.createElement("canvas");
@@ -43,7 +65,7 @@ function tick() {
     const code = jsQR(imageData.data, imageData.width, imageData.height);
 
     if (code) {
-      resultElement.textContent = `QR Code detected: ${code.data}`;
+      displayResult(code.data);
       stopScanner();
     }
   }
