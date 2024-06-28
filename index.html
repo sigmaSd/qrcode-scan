@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner PWA</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>QR Code Scanner</h1>
+    </header>
+    <main>
+        <div id="scanner-container">
+            <video id="scanner" autoplay playsinline></video>
+        </div>
+        <div id="result-container">
+            <p id="result"></p>
+        </div>
+        <button id="restart-button" style="display: none;">Scan Again</button>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then((reg) => console.log('Service worker registered:', reg))
+                .catch((err) => console.log('Service worker registration failed:', err));
+        }
+    </script>
+</body>
+</html>
