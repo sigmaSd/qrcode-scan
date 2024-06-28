@@ -1,28 +1,24 @@
-const CACHE_NAME = "qr-scanner-cache-v1";
-const urlsToCache = [
-  "/",
-  "/index.html",
-  "/styles.css",
-  "/app.js",
-  "/manifest.json",
-  "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js",
-];
+// Cache requests so the app can work offline
+// https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Offline_Service_workers
+const cacheName = "myapp";
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache)),
-  );
-});
-
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
+self.addEventListener("fetch", (e) => {
+  e.respondWith(
+    (async () => {
+      try {
+        const response = await fetch(e.request);
+        const cache = await caches.open(cacheName);
+        console.log(`[Service Worker] Caching resource: ${e.request.url}`);
+        cache.put(e.request, response.clone());
+        return response;
+      } catch {
+        // if we have no network access, try to use the cache
+        const response = await caches.match(e.request);
+        console.log(`[Service Worker] Using cached resource: ${e.request.url}`);
         if (response) {
           return response;
         }
-        return fetch(event.request);
-      }),
+      }
+    })(),
   );
 });
