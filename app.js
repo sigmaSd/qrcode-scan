@@ -1,7 +1,9 @@
 const video = document.getElementById("scanner");
 const resultElement = document.getElementById("result");
 const restartButton = document.getElementById("restart-button");
+const scannerContainer = document.getElementById("scanner-container");
 let scanning = false;
+let lastFrameUrl = null;
 
 async function startScanner() {
   try {
@@ -10,6 +12,11 @@ async function startScanner() {
     });
     video.srcObject = stream;
     video.setAttribute("playsinline", true);
+    video.style.display = "block";
+    if (lastFrameUrl) {
+      URL.revokeObjectURL(lastFrameUrl);
+      lastFrameUrl = null;
+    }
     video.play();
     scanning = true;
     restartButton.style.display = "none";
@@ -26,10 +33,27 @@ function stopScanner() {
   scanning = false;
   if (video.srcObject) {
     const tracks = video.srcObject.getTracks();
-    // biome-ignore lint/complexity/noForEach: <explanation>
     tracks.forEach((track) => track.stop());
   }
+  captureLastFrame();
   restartButton.style.display = "block";
+}
+
+function captureLastFrame() {
+  const canvas = document.createElement("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob((blob) => {
+    lastFrameUrl = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      video.style.display = "none";
+      scannerContainer.appendChild(img);
+    };
+    img.src = lastFrameUrl;
+  }, "image/jpeg");
 }
 
 function isValidURL(string) {
@@ -74,6 +98,12 @@ function tick() {
   }
 }
 
-restartButton.addEventListener("click", startScanner);
+restartButton.addEventListener("click", () => {
+  const lastFrame = scannerContainer.querySelector("img");
+  if (lastFrame) {
+    scannerContainer.removeChild(lastFrame);
+  }
+  startScanner();
+});
 
 startScanner();
