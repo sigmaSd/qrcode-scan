@@ -1,0 +1,16 @@
+{
+  "name": "QR Code Scanner",
+  "short_name": "QR Scanner",
+  "description": "A simple QR code scanner PWA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4285f4",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "type": "image/png",
+      "sizes": "256x256"
+    }
+   ]
+}
