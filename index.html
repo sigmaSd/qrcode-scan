@@ -14,6 +14,7 @@
     <main>
         <div id="scanner-container">
             <video id="scanner" autoplay playsinline></video>
+            <div id="drop-zone">Drop image here to decode</div>
         </div>
         <div id="result-container">
             <p id="result"></p>
@@ -25,7 +26,7 @@
     <script>
         // Register service worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js')
+            navigator.serviceWorker.register('service-worker.js')
                 .then((reg) => console.log('Service worker registered:', reg))
                 .catch((err) => console.log('Service worker registration failed:', err));
         }
