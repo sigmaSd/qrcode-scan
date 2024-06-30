@@ -22,6 +22,7 @@ main {
 }
 
 #scanner-container {
+    position: relative;
     width: 100%;
     aspect-ratio: 1;
     overflow: hidden;
@@ -32,6 +33,27 @@ main {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+#drop-zone {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 1.2rem;
+    text-align: center;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+#drop-zone.dragover {
+    background-color: rgba(0, 0, 0, 0.7);
 }
 
 #result-container {
@@ -53,4 +75,21 @@ main {
 
 #restart-button:hover {
     background-color: #3367d6;
+}
+
+#result-container a {
+    color: #4285f4;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+#result-container a:hover {
+    text-decoration: underline;
+}
+
+.dropped-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: #f0f0f0;
 }

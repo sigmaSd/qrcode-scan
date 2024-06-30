@@ -2,6 +2,7 @@ const video = document.getElementById("scanner");
 const resultElement = document.getElementById("result");
 const restartButton = document.getElementById("restart-button");
 const scannerContainer = document.getElementById("scanner-container");
+const dropZone = document.getElementById("drop-zone");
 let scanning = false;
 let lastFrameUrl = null;
 
@@ -13,6 +14,7 @@ async function startScanner() {
     video.srcObject = stream;
     video.setAttribute("playsinline", true);
     video.style.display = "block";
+    dropZone.style.display = "none";
     if (lastFrameUrl) {
       URL.revokeObjectURL(lastFrameUrl);
       lastFrameUrl = null;
@@ -98,12 +100,82 @@ function tick() {
   }
 }
 
-restartButton.addEventListener("click", () => {
-  const lastFrame = scannerContainer.querySelector("img");
-  if (lastFrame) {
-    scannerContainer.removeChild(lastFrame);
+function handleDragOver(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  dropZone.classList.add("dragover");
+}
+
+function handleDragLeave(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  dropZone.classList.remove("dragover");
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  dropZone.classList.remove("dragover");
+
+  const file = e.dataTransfer.files[0];
+  if (file?.type.startsWith("image/")) {
+    stopScanner();
+    decodeQRFromImage(file);
+  } else {
+    alert("Please drop a valid image file.");
   }
+}
+
+function decodeQRFromImage(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, img.width, img.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+      if (code) {
+        displayResult(code.data);
+      } else {
+        resultElement.textContent = "No QR code found in the image.";
+      }
+
+      // Display the dropped image
+      video.style.display = "none";
+      dropZone.style.display = "none";
+
+      // Remove any previous captured frame or dropped image
+      const existingImages = scannerContainer.querySelectorAll("img");
+      existingImages.forEach((img) => scannerContainer.removeChild(img));
+
+      // Add the new dropped image
+      const droppedImage = new Image();
+      droppedImage.src = e.target.result;
+      droppedImage.className = "dropped-image";
+      scannerContainer.appendChild(droppedImage);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+restartButton.addEventListener("click", () => {
+  const existingImage = scannerContainer.querySelector("img");
+  if (existingImage) {
+    scannerContainer.removeChild(existingImage);
+  }
+  dropZone.style.display = "flex";
+  dropZone.textContent = "Drop image here to decode";
   startScanner();
 });
+
+scannerContainer.addEventListener("dragover", handleDragOver);
+scannerContainer.addEventListener("dragleave", handleDragLeave);
+scannerContainer.addEventListener("drop", handleDrop);
 
 startScanner();
