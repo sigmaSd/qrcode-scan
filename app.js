@@ -14,7 +14,7 @@ async function startScanner() {
     video.srcObject = stream;
     video.setAttribute("playsinline", true);
     video.style.display = "block";
-    dropZone.style.display = "none";
+    dropZone.style.display = "flex";
     if (lastFrameUrl) {
       URL.revokeObjectURL(lastFrameUrl);
       lastFrameUrl = null;
@@ -25,7 +25,7 @@ async function startScanner() {
     resultElement.textContent = "Scanning for QR code...";
     requestAnimationFrame(tick);
   } catch (err) {
-    console.error("Error accessing camera:", err);
+    console.warn("Error accessing camera:", err);
     resultElement.textContent =
       "Error accessing camera. Please make sure you have given permission to use the camera.";
   }
@@ -48,6 +48,8 @@ function captureLastFrame() {
   canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
 
   canvas.toBlob((blob) => {
+    if (!blob) return;
+
     lastFrameUrl = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => {
@@ -131,37 +133,55 @@ function decodeQRFromImage(file) {
   reader.onload = (e) => {
     const img = new Image();
     img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, img.width, img.height);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-      if (code) {
-        displayResult(code.data);
-      } else {
-        resultElement.textContent = "No QR code found in the image.";
-      }
-
-      // Display the dropped image
-      video.style.display = "none";
-      dropZone.style.display = "none";
-
-      // Remove any previous captured frame or dropped image
-      const existingImages = scannerContainer.querySelectorAll("img");
-      existingImages.forEach((img) => scannerContainer.removeChild(img));
-
-      // Add the new dropped image
-      const droppedImage = new Image();
-      droppedImage.src = e.target.result;
-      droppedImage.className = "dropped-image";
-      scannerContainer.appendChild(droppedImage);
+      processImage(img);
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+function processImage(img) {
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0, img.width, img.height);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+  if (code) {
+    displayResult(code.data);
+  } else {
+    resultElement.textContent = "No QR code found in the image.";
+  }
+
+  // Display the image
+  video.style.display = "none";
+  dropZone.style.display = "none";
+
+  // Remove any previous captured frame or dropped image
+  const existingImage = scannerContainer.querySelector("img");
+  if (existingImage) {
+    scannerContainer.removeChild(existingImage);
+  }
+
+  // Add the new image
+  const newImage = new Image();
+  newImage.src = img.src;
+  newImage.className = "dropped-image";
+  scannerContainer.appendChild(newImage);
+}
+
+function handlePaste(e) {
+  const items = e.clipboardData.items;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf("image") !== -1) {
+      const blob = items[i].getAsFile();
+      stopScanner();
+      decodeQRFromImage(blob);
+      break;
+    }
+  }
 }
 
 restartButton.addEventListener("click", () => {
@@ -177,5 +197,6 @@ restartButton.addEventListener("click", () => {
 scannerContainer.addEventListener("dragover", handleDragOver);
 scannerContainer.addEventListener("dragleave", handleDragLeave);
 scannerContainer.addEventListener("drop", handleDrop);
+document.addEventListener("paste", handlePaste);
 
 startScanner();
